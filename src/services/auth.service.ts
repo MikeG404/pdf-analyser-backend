@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { usersTable } from '../db/schema.js';
 import { db } from '../index.js';
 
@@ -16,6 +17,18 @@ const authService = {
     },
     login: async () => {        
         return;
+    },
+    verifyUser: async (email: string) => {
+        const user = await db.select()
+            .from(usersTable)
+            .where(eq(usersTable.email, email))
+            .limit(1);
+
+        if (user.length === 0) {
+            return true;
+        }
+
+        return false;
     }
 }
 

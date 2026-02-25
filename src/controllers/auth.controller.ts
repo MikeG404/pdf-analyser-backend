@@ -20,6 +20,12 @@ const authController = {
 
         const { email, password} = userChecked;
 
+        const userExist = await authService.verifyUser(email)
+
+        if (!userExist) {
+            return res.status(404).json({ error: "User already exist"})
+        }
+
         let hashPassword;
         try {
             hashPassword = await argon2.hash(password)
