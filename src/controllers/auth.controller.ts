@@ -1,11 +1,81 @@
 import type { Request, Response } from "express";
+import argon2 from "argon2";
+import authService from "../services/auth.service.js";
+import UserModel from "../models/user.model.js";
+import UserDTO from "../dto/user.dto.js";
 
 const authController = {
-    login: (req: Request, res: Response) => {
-        return res.status(200).send("Login");
+    signUp: async (req: Request, res: Response) => {
+        const body = req.body
+
+        let userChecked;
+        try {
+            userChecked = UserModel.parse(body);
+        } catch (error) {
+            return res.status(400).json({ error: "Data is incorrect"})
+        }
+        
+        const { email, password} = userChecked;
+
+        let isEmailAvailable;
+        try {
+            isEmailAvailable = await authService.isEmailAvailable(email)
+        } catch (error) {
+            return res.status(500).json({ error: "Failed to verify user"})
+        }
+
+        if (isEmailAvailable) {
+            return res.status(409).json({ error: "User already exist"})
+        }
+
+        let hashPassword;
+        try {
+            hashPassword = await argon2.hash(password)
+        } catch (error) {
+            return res.status(500).json({ error: "Password Hash failed"})
+        }
+
+        let user;
+        try {
+            user = await authService.signUp(email, hashPassword);
+        } catch (error) {
+            return res.status(500).json({ error: "Failed to create user"})
+        }
+
+        return res.status(201).json(new UserDTO(user));
     },
-    signUp: (req: Request, res: Response) => {        
-        return res.status(200).send("Signup");
+
+    login: async (req: Request, res: Response) => {
+        const body = req.body;
+
+        let userChecked;
+        try {
+            userChecked = UserModel.parse(body);
+        } catch (error) {
+            return res.status(400).json({ error: "Data is incorrect"})
+        }
+
+        const { email, password } = userChecked;
+
+        let user;
+        try {
+            user = await authService.login(email);
+        } catch (error) {
+            return res.status(401).json({ error: "Invalid credentials"})
+        }
+
+        let verifiedPassword;
+        try {
+            verifiedPassword = await argon2.verify(user.password, password)
+        } catch (error) {
+            return res.status(500).json({ error: "Password verification failed"})
+        }
+
+        if (!verifiedPassword) {
+            return res.status(401).json({ error: "Invalid credentials"})
+        }
+
+        return res.status(200).json(new UserDTO(user));
     }
 }
 
