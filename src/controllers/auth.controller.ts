@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import argon2 from "argon2";
 import authService from "../services/auth.service.js";
 import UserModel from "../models/user.model.js";
+import UserDTO from "../dto/user.dto.js";
 
 const authController = {
     signUp: async (req: Request, res: Response) => {
@@ -11,19 +12,20 @@ const authController = {
         try {
             userChecked = UserModel.parse(body);
         } catch (error) {
-            return res.status(404).json({ error: "Data is incorrect"})
+            return res.status(400).json({ error: "Data is incorrect"})
         }
         
-        if (!userChecked) {
-            return res.status(500).json({ error: "Failed to create user" });
-        }
-
         const { email, password} = userChecked;
 
-        const userExist = await authService.verifyUser(email)
+        let isEmailAvailable;
+        try {
+            isEmailAvailable = await authService.isEmailAvailable(email)
+        } catch (error) {
+            return res.status(500).json({ error: "Failed to verify user"})
+        }
 
-        if (!userExist) {
-            return res.status(404).json({ error: "User already exist"})
+        if (isEmailAvailable) {
+            return res.status(409).json({ error: "User already exist"})
         }
 
         let hashPassword;
@@ -32,10 +34,15 @@ const authController = {
         } catch (error) {
             return res.status(500).json({ error: "Password Hash failed"})
         }
-        
-        const user = await authService.signUp(email, hashPassword);
 
-        return res.status(201).json(user);
+        let user;
+        try {
+            user = await authService.signUp(email, hashPassword);
+        } catch (error) {
+            return res.status(500).json({ error: "Failed to create user"})
+        }
+
+        return res.status(201).json(new UserDTO(user[0]));
     },
 
     login: (req: Request, res: Response) => {

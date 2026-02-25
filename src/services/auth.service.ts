@@ -18,17 +18,17 @@ const authService = {
     login: async () => {        
         return;
     },
-    verifyUser: async (email: string) => {
+    isEmailAvailable: async (email: string) => {
         const user = await db.select()
             .from(usersTable)
             .where(eq(usersTable.email, email))
             .limit(1);
 
         if (user.length === 0) {
-            return true;
+            return false;
         }
 
-        return false;
+        return true;
     }
 }
 
