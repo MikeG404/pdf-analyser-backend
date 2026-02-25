@@ -1,15 +1,20 @@
 import type { Request, Response } from "express";
 import authService from "../services/auth.service.js";
+import UserModel from "../models/user.model.js";
 
 const authController = {
     signUp: async (req: Request, res: Response) => {
-        const { email, password } = req.body
-        
-        const user = await authService.signUp(email, password);
+        const body = req.body
 
-        if (!user) {
+        const userChecked = UserModel.parse(body); 
+
+        if (!userChecked) {
             return res.status(500).json({ error: "Failed to create user" });
         }
+        
+        const { email, password} = userChecked;
+        const user = await authService.signUp(email, password);
+
 
         return res.status(201).json(user);
     },
