@@ -6,8 +6,13 @@ const authController = {
     signUp: async (req: Request, res: Response) => {
         const body = req.body
 
-        const userChecked = UserModel.parse(body); 
-
+        let userChecked;
+        try {
+            userChecked = UserModel.parse(body);
+        } catch (error) {
+            return res.status(404).json({ error: "Data is incorrect"})
+        }
+        
         if (!userChecked) {
             return res.status(500).json({ error: "Failed to create user" });
         }
