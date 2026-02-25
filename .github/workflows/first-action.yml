@@ -1,4 +1,4 @@
-name: Demo
+name: test
 on: workflow_dispatch
 jobs:
   first-job:
@@ -8,3 +8,13 @@ jobs:
         run: | 
           echo "Hello World! 1"
           echo "Hello World! 2"
+      - name: Code
+        uses: actions/checkout@v3
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install
+        run: npm i
+      - name: Test
+        run: npm run test
