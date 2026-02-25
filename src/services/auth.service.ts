@@ -9,14 +9,27 @@ const authService = {
             password,
         };
 
-        const fields = await db.insert(usersTable)
+        const [createdUser] = await db.insert(usersTable)
             .values(user)
             .returning();
-            
-        return fields; 
+
+        if (!createdUser) {
+            throw new Error("Failed to create user");
+        }
+
+        return createdUser; 
     },
-    login: async () => {        
-        return;
+    login: async (email: string) => {
+        const user = await db.select()
+            .from(usersTable)
+            .where(eq(usersTable.email, email))
+            .limit(1);
+        
+        if (user.length === 0) {
+            throw new Error("User does not exist");
+        }
+
+        return user[0]!;
     },
     isEmailAvailable: async (email: string) => {
         const user = await db.select()

@@ -42,12 +42,40 @@ const authController = {
             return res.status(500).json({ error: "Failed to create user"})
         }
 
-        return res.status(201).json(new UserDTO(user[0]));
+        return res.status(201).json(new UserDTO(user));
     },
 
-    login: (req: Request, res: Response) => {
+    login: async (req: Request, res: Response) => {
+        const body = req.body;
 
-        return res.status(200).send("Login");
+        let userChecked;
+        try {
+            userChecked = UserModel.parse(body);
+        } catch (error) {
+            return res.status(400).json({ error: "Data is incorrect"})
+        }
+
+        const { email, password } = userChecked;
+
+        let user;
+        try {
+            user = await authService.login(email);
+        } catch (error) {
+            return res.status(401).json({ error: "Invalid credentials"})
+        }
+
+        let verifiedPassword;
+        try {
+            verifiedPassword = await argon2.verify(user.password, password)
+        } catch (error) {
+            return res.status(500).json({ error: "Password verification failed"})
+        }
+
+        if (!verifiedPassword) {
+            return res.status(401).json({ error: "Invalid credentials"})
+        }
+
+        return res.status(200).json(new UserDTO(user));
     }
 }
 
