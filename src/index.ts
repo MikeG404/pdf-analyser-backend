@@ -1,9 +1,9 @@
 import "dotenv/config";
 import express from "express";
+import morgan from "morgan";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 import authRouter from "./routes/auth.route.js";
-import authService from "./services/auth.service.js";
 
 const app = express();
 
@@ -16,9 +16,10 @@ export const db = drizzle({
     }
 })
 
-app.use("/api/auth", authRouter);
+app.use(express.json());
+app.use(morgan('dev'));
 
-authService.signUp("Mike", "Passowrd")
+app.use("/api/auth", authRouter);
 
 app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
