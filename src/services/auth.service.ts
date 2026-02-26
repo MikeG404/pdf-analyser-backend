@@ -19,30 +19,18 @@ const authService = {
 
         return createdUser; 
     },
-    login: async (email: string) => {
+    findUserByEmail: async (email: string) => {
         const user = await db.select()
             .from(usersTable)
             .where(eq(usersTable.email, email))
             .limit(1);
         
         if (user.length === 0) {
-            throw new Error("User does not exist");
+            return null;
         }
 
         return user[0]!;
     },
-    isEmailAvailable: async (email: string) => {
-        const user = await db.select()
-            .from(usersTable)
-            .where(eq(usersTable.email, email))
-            .limit(1);
-
-        if (user.length === 0) {
-            return false;
-        }
-
-        return true;
-    }
 }
 
 export default authService;

@@ -9,7 +9,7 @@ const options = {
 
 passport.use(new JwtStrategy(options, async (jwt_payload, done) => {
     try {
-        const user = await authService.isEmailAvailable(jwt_payload.email);
+        const user = await authService.findUserByEmail(jwt_payload.email);
 
         if (user) {
             return done(null, user);

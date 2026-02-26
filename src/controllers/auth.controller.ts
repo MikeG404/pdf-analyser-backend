@@ -20,7 +20,7 @@ const authController = {
 
         let isEmailAvailable;
         try {
-            isEmailAvailable = await authService.isEmailAvailable(email)
+            isEmailAvailable = await authService.findUserByEmail(email)
         } catch (error) {
             return res.status(500).json({ error: "Failed to verify user"})
         }
@@ -60,7 +60,7 @@ const authController = {
 
         let user;
         try {
-            user = await authService.login(email);
+            user = await authService.findUserByEmail(email);
         } catch (error) {
             return res.status(401).json({ error: "Invalid credentials"})
         }
