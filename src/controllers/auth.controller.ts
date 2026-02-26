@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import argon2 from "argon2";
+import jwt from "jsonwebtoken";
 import authService from "../services/auth.service.js";
 import UserModel from "../models/user.model.js";
 import UserDTO from "../dto/user.dto.js";
@@ -75,7 +76,13 @@ const authController = {
             return res.status(401).json({ error: "Invalid credentials"})
         }
 
-        return res.status(200).json(new UserDTO(user));
+        const payload = {
+            id: user.id,
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 60 * 60});
+
+        return res.status(200).json({ message: "Login succeed", token})
     }
 }
 
