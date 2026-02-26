@@ -78,6 +78,7 @@ const authController = {
 
         const payload = {
             id: user.id,
+            email: user.email
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 60 * 60});
