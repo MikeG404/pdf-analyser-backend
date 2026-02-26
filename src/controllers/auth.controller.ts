@@ -61,6 +61,9 @@ const authController = {
         let user;
         try {
             user = await authService.findUserByEmail(email);
+            if (!user) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
         } catch (error) {
             return res.status(401).json({ error: "Invalid credentials"})
         }
@@ -81,7 +84,9 @@ const authController = {
             email: user.email
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 60 * 60});
+        const secret = process.env.JWT_SECRET as string;
+
+        const token = jwt.sign(payload, secret, { expiresIn: "7d"});
 
         return res.status(200).json({ message: "Login succeed", token})
     }
