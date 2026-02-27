@@ -1,8 +1,12 @@
 import type { Request, Response } from "express";
 import argon2 from "argon2";
+import jwt from "jsonwebtoken";
 import authService from "../services/auth.service.js";
 import UserModel from "../models/user.model.js";
 import UserDTO from "../dto/user.dto.js";
+
+// TODO : To adapt with the frontend
+const frontendUrl = 'http://localhost:5173';
 
 const authController = {
     signUp: async (req: Request, res: Response) => {
@@ -12,34 +16,34 @@ const authController = {
         try {
             userChecked = UserModel.parse(body);
         } catch (error) {
-            return res.status(400).json({ error: "Data is incorrect"})
+            return res.status(400).json({ error: "Data is incorrect" })
         }
-        
-        const { email, password} = userChecked;
+
+        const { email, password } = userChecked;
 
         let isEmailAvailable;
         try {
-            isEmailAvailable = await authService.isEmailAvailable(email)
+            isEmailAvailable = await authService.findUserByEmail(email)
         } catch (error) {
-            return res.status(500).json({ error: "Failed to verify user"})
+            return res.status(500).json({ error: "Failed to verify user" })
         }
 
         if (isEmailAvailable) {
-            return res.status(409).json({ error: "User already exist"})
+            return res.status(409).json({ error: "User already exist" })
         }
 
         let hashPassword;
         try {
             hashPassword = await argon2.hash(password)
         } catch (error) {
-            return res.status(500).json({ error: "Password Hash failed"})
+            return res.status(500).json({ error: "Password Hash failed" })
         }
 
         let user;
         try {
             user = await authService.signUp(email, hashPassword);
         } catch (error) {
-            return res.status(500).json({ error: "Failed to create user"})
+            return res.status(500).json({ error: "Failed to create user" })
         }
 
         return res.status(201).json(new UserDTO(user));
@@ -52,30 +56,62 @@ const authController = {
         try {
             userChecked = UserModel.parse(body);
         } catch (error) {
-            return res.status(400).json({ error: "Data is incorrect"})
+            return res.status(400).json({ error: "Data is incorrect" })
         }
 
         const { email, password } = userChecked;
 
         let user;
         try {
-            user = await authService.login(email);
+            user = await authService.findUserByEmail(email);
+            if (!user) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
         } catch (error) {
-            return res.status(401).json({ error: "Invalid credentials"})
+            return res.status(401).json({ error: "Invalid credentials" })
         }
 
         let verifiedPassword;
         try {
             verifiedPassword = await argon2.verify(user.password, password)
         } catch (error) {
-            return res.status(500).json({ error: "Password verification failed"})
+            return res.status(500).json({ error: "Password verification failed" })
         }
 
         if (!verifiedPassword) {
-            return res.status(401).json({ error: "Invalid credentials"})
+            return res.status(401).json({ error: "Invalid credentials" })
         }
 
-        return res.status(200).json(new UserDTO(user));
+        const payload = {
+            id: user.id,
+            email: user.email
+        };
+
+        const secret = process.env.JWT_SECRET as string;
+
+        const token = jwt.sign(payload, secret, { expiresIn: "7d" });
+
+        return res.status(200).json({ message: "Login succeed", token })
+    },
+    googleCallback: async (req: Request, res: Response) => {
+        const user = req.user;
+
+        if (!user) {
+            res.redirect(`${frontendUrl}/login?error=oauth_failed`)
+        }
+
+        const payload = {
+            id: user.id,
+            email: user.email
+        };
+
+        const token = jwt.sign(
+            payload, 
+            process.env.JWT_SECRET as string,
+            { expiresIn: '1d' }
+        );
+
+        return res.redirect(`${frontendUrl}/dashboard?token=${token}`);
     }
 }
 
