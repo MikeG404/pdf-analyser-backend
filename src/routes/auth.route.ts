@@ -17,20 +17,7 @@ authRouter.get('/google/callback', passport.authenticate('google', {
         session: false, 
         failureRedirect: '/login-failed'
     }),
-    (req, res) => {
-        const user = req.user;        
-
-        if (!user) {
-            return res.status(404).json({
-                message: "Connection failed!"
-            })
-        }
-
-        return res.status(200).json({
-            message: "Connection Succeed!",
-            user: user
-        })
-    }
+   authController.googleCallback
 );
 
 authRouter.get("/profile", passport.authenticate('jwt', {session: false}),
