@@ -13,7 +13,7 @@ const { mockLimit, mockWhere, mockFrom, mockSelect } = vi.hoisted(() => {
   const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
   const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
   const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
-  return { mockLimit, mockWhere, mockFrom, mockSelect };
+  return { mockLimi, mockWhere, mockFrom, mockSelect };
 });
 
 vi.mock("../index.ts", () => {
